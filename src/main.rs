@@ -117,7 +117,7 @@ fn main() {
 
     let root_configs = root.join(config.config_dir);
 
-    fn with_generated_comment(s: &str, url: &str, ext: &str) -> String {
+    fn with_generated_comment(s: &str, url: &str, ext: &Path) -> String {
         let marker = s
             .lines()
             .next()
@@ -141,15 +141,7 @@ fn main() {
         header
             .into_iter()
             .fold(String::new(), |contents, line| {
-                format!(
-                    "{contents}{}",
-                    match ext {
-                        "nu" | "toml" => format!("# {line}\n"),
-                        "ron" => format!("// {line}\n"),
-                        "tmTheme" => format!("<!-- {line} -->\n"),
-                        _ => line.to_string(),
-                    }
-                )
+                format!("{contents}{}\n", commented::comment(line, ext))
             })
             .pipe(|comment| format!("{marker}{comment}{contents}"))
     }
@@ -189,15 +181,7 @@ fn main() {
 
                 fs::create_dir_all(path.parent().unwrap()).unwrap();
                 dbg!(&path);
-                fs::write(
-                    &path,
-                    with_generated_comment(
-                        &contents,
-                        url,
-                        path.extension().unwrap().to_str().unwrap(),
-                    ),
-                )
-                .unwrap();
+                fs::write(&path, with_generated_comment(&contents, url, &path)).unwrap();
                 log::info!(
                     "{CYAN}downloaded{RESET}\n  {BLUE}{url}{RESET} {BLACK}\n  ->{RESET}  {}",
                     path.display()
