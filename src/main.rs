@@ -1,5 +1,6 @@
 use clap::Parser;
 use etcetera::BaseStrategy;
+use eyre::{Context, Result, eyre};
 use handlebars::Handlebars;
 use interpolator::Formattable;
 use serde::{Deserialize, Serialize};
@@ -40,34 +41,8 @@ struct MarkerArgs {
     path: Option<String>,
 }
 
-macro_rules! MarkerArgs_context {
-    () => {
-        [
-            (
-                "config",
-                etcetera::choose_base_strategy()
-                    .unwrap()
-                    .config_dir()
-                    .to_string_lossy()
-                    .to_string()
-                    .pipe_ref(Formattable::display),
-            ),
-            (
-                "home",
-                etcetera::choose_base_strategy()
-                    .unwrap()
-                    .home_dir()
-                    .to_string_lossy()
-                    .to_string()
-                    .pipe_ref(Formattable::display),
-            ),
-        ]
-        .pipe(HashMap::from)
-    };
-}
-
 impl FromStr for MarkerArgs {
-    type Err = anyhow::Error;
+    type Err = eyre::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         shellwords::split(s)?
@@ -76,6 +51,7 @@ impl FromStr for MarkerArgs {
     }
 }
 
+/// Remove a file, and if it's not found then that is not considered an error
 fn remove_file(file: &Path) -> Result<(), io::Error> {
     match fs::remove_file(file) {
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(()),
@@ -87,7 +63,7 @@ fn remove_file(file: &Path) -> Result<(), io::Error> {
     }
 }
 
-fn main() {
+fn main() -> eyre::Result<()> {
     env_logger::Builder::new()
         .filter_level(log::LevelFilter::Info)
         .format(|buf, record| {
@@ -105,13 +81,15 @@ fn main() {
         })
         .init();
 
-    let root = current_dir().unwrap();
+    let _ = color_eyre::install();
+
+    let root = current_dir().context("failed to obtain current directory")?;
     let config = root
         .join(CONFIG_FILE_NAME)
         .pipe(fs::read_to_string)
-        .unwrap()
+        .with_context(|| eyre!("failed to read config file {CONFIG_FILE_NAME}"))?
         .pipe(|x| toml::de::from_str::<Config>(&x))
-        .unwrap();
+        .context("failed to parse config file")?;
 
     let home = env::home_dir().unwrap();
 
@@ -231,9 +209,32 @@ fn main() {
                 (
                     // remove the first line which contains the `@dotfilers`
                     file_contents.lines().skip(1).collect::<Vec<_>>().join(","),
-                    interpolator::format(&path, &MarkerArgs_context!())
-                        .unwrap()
-                        .pipe(PathBuf::from),
+                    interpolator::format(
+                        &path,
+                        &[
+                            (
+                                "config",
+                                etcetera::choose_base_strategy()
+                                    .unwrap()
+                                    .config_dir()
+                                    .to_string_lossy()
+                                    .to_string()
+                                    .pipe_ref(Formattable::display),
+                            ),
+                            (
+                                "home",
+                                etcetera::choose_base_strategy()
+                                    .unwrap()
+                                    .home_dir()
+                                    .to_string_lossy()
+                                    .to_string()
+                                    .pipe_ref(Formattable::display),
+                            ),
+                        ]
+                        .pipe(HashMap::from),
+                    )
+                    .unwrap()
+                    .pipe(PathBuf::from),
                 )
             } else {
                 (file_contents, config.join(relative_location))
@@ -285,5 +286,7 @@ fn main() {
                     .pipe(PathBuf::from))
                     .display()
             );
-        })
+        });
+
+    Ok(())
 }

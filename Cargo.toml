@@ -1,15 +1,16 @@
 [package]
-name = "dotfiles_manager"
+name = "dotfilers"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 anstyle = "1.0.11"
-anyhow = "1.0.98"
 clap = { version = "4.5.40", features = ["derive"] }
+color-eyre = "0.6.5"
 commented = { version = "0.1.0", features = ["glob"] }
 env_logger = "0.11.8"
 etcetera = "0.10.0"
+eyre = "0.6.12"
 handlebars = "6.3.2"
 interpolator = "0.5.0"
 log = "0.4.27"
