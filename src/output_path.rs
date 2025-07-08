@@ -40,6 +40,22 @@ impl FromStr for OutputPath {
                     .pipe_ref(Formattable::display),
             ),
             (
+                "data",
+                strategy
+                    .data_dir()
+                    .to_string_lossy()
+                    .to_string()
+                    .pipe_ref(Formattable::display),
+            ),
+            (
+                "cache",
+                strategy
+                    .cache_dir()
+                    .to_string_lossy()
+                    .to_string()
+                    .pipe_ref(Formattable::display),
+            ),
+            (
                 "home",
                 strategy
                     .home_dir()
