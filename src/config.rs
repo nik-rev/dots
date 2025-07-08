@@ -97,7 +97,7 @@ impl Config {
                     log::error!("{err}");
                 }
                 if !errors.is_empty() {
-                    bail!("encountered errors when trying to proccess directories")
+                    bail!("encountered errors when trying to process directories")
                 }
 
                 Ok(())
