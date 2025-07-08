@@ -1,10 +1,13 @@
 //! `dots` is a cozy dotfiles manager
 
+use clap::Parser as _;
 use config::Config;
 use eyre::{Context as _, Result};
 use simply_colored::*;
 
 use std::io::Write as _;
+
+mod cli;
 mod config;
 mod output_path;
 mod stdx;
@@ -12,8 +15,10 @@ mod stdx;
 use log::Level;
 
 fn main() -> Result<()> {
+    let cli = cli::Cli::parse();
+
     env_logger::Builder::new()
-        .filter_level(log::LevelFilter::Info)
+        .filter_level(cli.verbosity.into())
         .format(|buf, record| {
             let color = match record.level() {
                 Level::Error => RED,

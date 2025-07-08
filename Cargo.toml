@@ -20,7 +20,12 @@ lto = "fat"
 
 [dependencies]
 anstyle = "1.0.11"
-clap = { version = "4.5.40", features = ["derive"] }
+clap = { version = "4.5.40", features = [
+  "derive",
+  "wrap_help",
+  "unstable-markdown",
+] }
+clap-verbosity-flag = "3.0.3"
 color-eyre = "0.6.5"
 commented = { version = "0.1.0", features = ["glob"] }
 easy-ext = "1.0.2"

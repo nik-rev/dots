@@ -73,18 +73,18 @@ C-j = "join_selections_space"
 There is duplication. In order to avoid this, you can do this:
 
 ```toml
-{{#* inline "rebindings" }}
+#{{#* inline "rebindings" }}
 # DEFAULT: A-C
 A-c = "copy_selection_on_prev_line"
 # DEFAULT: A-J
 C-j = "join_selections_space"
-{{/inline}}
+#{{/inline}}
 
 [keys.normal]
-{{> rebindings }}
+#{{> rebindings }}
 
 [keys.select]
-{{> rebindings }}
+#{{> rebindings }}
 ```
 
-All instances of `{{> rebindings }}` will be replaced by the `inline` block. This is just one of many features that a templating language provides
+All instances of `{{> rebindings }}` will be replaced by the `inline` block. This is just one of many features that a templating language provides!
