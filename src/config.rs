@@ -1,5 +1,6 @@
 //! Config for `dots`
 
+use crate::stdx::PathExt as _;
 use std::collections::BTreeMap;
 use std::path::{self, Path};
 use std::str::FromStr;
@@ -15,7 +16,7 @@ use simply_colored::*;
 use tap::Pipe as _;
 use walkdir::WalkDir;
 
-use crate::stdx::{self, PathExt as _};
+use crate::stdx;
 use crate::{output_path::OutputPath, stdx::traverse_upwards};
 
 /// Configuration for `dots`
@@ -135,7 +136,7 @@ impl FromStr for Marker {
 }
 
 /// Represents a single input and output directory to use
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct Dir {
     /// Local path to a directory that will be interpreted
     pub input: PathBuf,
@@ -146,19 +147,24 @@ pub struct Dir {
 impl Dir {
     /// Process the directory
     pub fn process(self, root: &Path) -> Result<()> {
-        let Self { input, output } = self;
-
-        WalkDir::new(&input)
+        WalkDir::new(root.join(&self.input))
             .into_iter()
             .flatten()
             .filter(|dir_entry| dir_entry.file_type().is_file())
             .try_for_each(|file| {
+                // dbg!();
+                // location of the old link
                 let old_location = path::absolute(file.path())?;
 
                 let file_contents = fs::read_to_string(&old_location)
                     .with_context(|| eyre!("failed to read path {}", old_location.show()))?;
 
-                let relative_location = old_location.strip_prefix(root)?.strip_prefix(&input)?;
+                // dbg!();
+
+                let relative_location =
+                    old_location.strip_prefix(root)?.strip_prefix(&self.input)?;
+
+                // dbg!(relative_location);
 
                 let (file_contents, new_location) = if let Some(first_line) =
                     file_contents.lines().next()
@@ -176,7 +182,7 @@ impl Dir {
                 } else {
                     (
                         file_contents,
-                        output
+                        self.output
                             .as_ref()
                             .join(relative_location)
                             .pipe(OutputPath::new),
@@ -201,7 +207,7 @@ impl Dir {
 }
 
 /// A link representing a file to be fetched
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Link {
     /// URL to the link, e.g. `https://raw.githubusercontent.com/catppuccin/nushell/05987d258cb765a881ee1f2f2b65276c8b379658/themes/catppuccin_mocha.nu`
     pub url: String,

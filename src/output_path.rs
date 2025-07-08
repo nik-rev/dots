@@ -14,7 +14,7 @@ use crate::stdx::PathExt as _;
 /// The `FromStr` impl for this allow for interpolation, i.e.
 /// if the config directory is `~/.config`, then `{config}/helix` will
 /// parse as `~/.config/helix`
-#[nutype::nutype(derive(AsRef, Clone))]
+#[nutype::nutype(derive(AsRef, Clone, Debug))]
 pub struct OutputPath(PathBuf);
 
 impl Display for OutputPath {
