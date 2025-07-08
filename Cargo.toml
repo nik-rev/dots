@@ -23,6 +23,7 @@ handlebars = "6.3.2"
 interpolator = "0.5.0"
 itertools = "0.14.0"
 log = "0.4.27"
+nutype = "0.6.1"
 serde = { version = "1.0.219", features = ["derive"] }
 sha256 = "1.6.0"
 shellwords = "1.1.0"

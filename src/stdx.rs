@@ -13,7 +13,6 @@ use std::{
 /// - `/home/user/`
 /// - `/home/`
 /// - `/`
-#[allow(unused, reason = "used later")]
 pub fn traverse_upwards(base_dir: impl AsRef<Path>) -> impl Iterator<Item = PathBuf> {
     let mut current_dir = Some(base_dir.as_ref().to_path_buf());
     iter::once(base_dir.as_ref().to_path_buf()).chain(iter::from_fn(move || {
