@@ -2,5 +2,8 @@ allow-expect-in-tests = true
 allow-unwrap-in-tests = true
 allow-dbg-in-tests = true
 allow-print-in-tests = true
+disallowed-methods = [
+  { path = "std::path::Path::display", reason = "use `stdx::PathExt::show` instead, it has colors!" }
+]
 # this crate only exports a couple of constants for coloring
 allowed-wildcard-imports = ["simply_colored"]

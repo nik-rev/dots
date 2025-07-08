@@ -15,7 +15,7 @@ use simply_colored::*;
 use tap::Pipe as _;
 use walkdir::WalkDir;
 
-use crate::stdx;
+use crate::stdx::{self, PathExt as _};
 use crate::{output_path::OutputPath, stdx::traverse_upwards};
 
 /// Configuration for `dots`
@@ -34,6 +34,8 @@ pub struct Config {
     pub dirs: Vec<Dir>,
 }
 
+const GITHUB: &str = "https://github.com/nik-rev/dots";
+
 impl Config {
     /// Name of the config file for `dots` to search for
     const FILE_NAME: &str = "dots.toml";
@@ -50,7 +52,7 @@ impl Config {
                 eyre!(
                     "failed to find directory that contains a `{}`. traversed upwards from {}",
                     Self::FILE_NAME,
-                    cwd.display()
+                    cwd.show()
                 )
             })?;
 
@@ -67,10 +69,13 @@ impl Config {
     }
 
     /// Process the config
+    ///
+    /// - Download all links to the given locations
+    /// - Map all input paths to output paths
     pub fn process(self) -> Result<()> {
         self.links
             .into_iter()
-            .map(|link| link.process(&self.root))
+            .map(|link| link.download(&self.root))
             .partition_result::<Vec<_>, Vec<_>, _, _>()
             .pipe(|(_, errors)| {
                 for error in &errors {
@@ -133,7 +138,7 @@ impl FromStr for Marker {
 #[derive(Deserialize)]
 pub struct Dir {
     /// Local path to a directory that will be interpreted
-    pub path: PathBuf,
+    pub input: PathBuf,
     /// Output directory
     pub output: OutputPath,
 }
@@ -141,9 +146,9 @@ pub struct Dir {
 impl Dir {
     /// Process the directory
     pub fn process(self, root: &Path) -> Result<()> {
-        let Self { path, output } = self;
+        let Self { input, output } = self;
 
-        WalkDir::new(path)
+        WalkDir::new(input)
             .into_iter()
             .flatten()
             .filter(|dir_entry| dir_entry.file_type().is_file())
@@ -151,13 +156,13 @@ impl Dir {
                 let old_location = file.path();
 
                 let file_contents = fs::read_to_string(old_location)
-                    .with_context(|| eyre!("failed to read path {}", old_location.display()))?;
+                    .with_context(|| eyre!("failed to read path {}", old_location.show()))?;
 
                 let relative_location = old_location.strip_prefix(root).with_context(|| {
                     eyre!(
                         "failed to strip prefix {} from {}",
-                        root.display(),
-                        old_location.display()
+                        root.show(),
+                        old_location.show()
                     )
                 })?;
 
@@ -185,34 +190,17 @@ impl Dir {
                 };
 
                 let old_relative_to_cwd_canon = fs::canonicalize(old_location)
-                    .with_context(|| eyre!("failed to canonicalize {}", old_location.display()))?;
+                    .with_context(|| eyre!("failed to canonicalize {}", old_location.show()))?;
                 let old_relative_to_cwd = old_relative_to_cwd_canon
                     .strip_prefix(root)
                     .with_context(|| {
                         eyre!(
                             "failed to strip prefix {} from {}",
-                            root.display(),
-                            old_relative_to_cwd_canon.display()
+                            root.show(),
+                            old_relative_to_cwd_canon.show()
                         )
                     })?
-                    .display();
-
-                // 1. Remove the old file
-                stdx::remove_file(new_location.as_ref())
-                    .inspect(|()| log::warn!("{RED}removed{RESET} {old_relative_to_cwd}"))?;
-
-                let dir = new_location
-                    .as_ref()
-                    .parent()
-                    .with_context(|| eyre!("failed to obtain parent of {new_location}"))?;
-
-                // 2. Parent directory of existing file might not exit
-                //
-                //    We don't want to symlink directories themselves,
-                //    because they might contain data we don't want in
-                //    our dotfiles.
-                fs::create_dir_all(dir)
-                    .with_context(|| eyre!("failed to create {}", dir.display()))?;
+                    .show();
 
                 let mut handlebars = Handlebars::new();
                 handlebars
@@ -223,8 +211,8 @@ impl Dir {
                     .render("t1", &BTreeMap::<u8, u8>::new())
                     .with_context(|| eyre!("failed to render template for {new_location}"))?;
 
-                fs::write(new_location.as_ref(), contents)
-                    .with_context(|| eyre!("failed to write to {new_location}"))?;
+                stdx::write_file(new_location.as_ref(), &contents)
+                    .context("failed to write output file")?;
 
                 log::info!(
                     "{CYAN}symlinked{RESET} \n  {old_relative_to_cwd} \
@@ -254,74 +242,66 @@ pub struct Link {
 
 impl Link {
     /// Process the link
-    pub fn process(self, root: &Path) -> Result<()> {
-        let Self {
-            url,
-            path,
-            sha256,
-            marker,
-        } = self;
+    pub fn download(self, root: &Path) -> Result<()> {
+        let url = &self.url;
 
-        let contents = ureq::get(&url).call()?.body_mut().read_to_string()?;
-        let actual_sha256 = sha256::digest(&contents);
+        let link_contents = ureq::get(&self.url).call()?.body_mut().read_to_string()?;
+        let actual_sha256 = sha256::digest(&link_contents);
 
-        if let Some(sha256) = sha256
-            && actual_sha256 != *sha256
+        if let Some(expected_sha256) = self.sha256
+            && actual_sha256 != *expected_sha256
         {
             let mismatch = format!("link       {BLUE}{url}{RESET}");
             let actual = format!("actual     {CYAN}{actual_sha256}{RESET}");
-            let expected = format!("expected   {CYAN}{sha256}{RESET}");
+            let expected = format!("expected   {CYAN}{expected_sha256}{RESET}");
             bail!("hash mismatch\n  {mismatch}\n  {actual}\n  {expected}");
         }
-        let path = root.join(path);
+
+        // download the link's contents to *this* path
+        let path = root.join(self.path);
 
         // add the marker if necessary
-        let marker = marker.as_ref().map_or(String::new(), |v| {
-            format!("{}{v}", Marker::MARKER).pipe(|it| commented::comment(it, &path)) + "\n"
+        let marker = self.marker.as_ref().map_or(String::new(), |marker_args| {
+            format!("{}{marker_args}", Marker::MARKER)
+                .pipe(|marker| commented::comment(marker, &path))
+                + "\n"
         });
-        let contents = format!("{marker}{contents}");
-        stdx::remove_file(&path)
-            .with_context(|| eyre!("failed to remove file: {}", path.display()))?;
 
-        let dir = path
-            .parent()
-            .with_context(|| eyre!("failed to obtain parent of {}", path.display()))?;
-        fs::create_dir_all(dir)
-            .with_context(|| eyre!("failed to create directory for {}", dir.display()))?;
+        let file_contents = format!("{marker}{link_contents}");
 
-        fs::write(&path, {
-            let marker = contents
-                .lines()
-                .next()
-                .filter(|line| line.contains(Marker::MARKER))
-                .map(|line| format!("{line}\n"))
-                .unwrap_or_default();
-            let contents = if let Some(first_line) = contents.lines().next()
-                && first_line.contains(Marker::MARKER)
-            {
-                contents.lines().skip(1).collect::<Vec<_>>().join("\n")
-            } else {
-                contents.to_string()
-            };
+        let marker = file_contents
+            .lines()
+            .next()
+            .filter(|line| line.contains(Marker::MARKER))
+            .map(|line| format!("{line}\n"))
+            .unwrap_or_default();
 
-            let header = [
-                format!("@generated by `{}`", Marker::MARKER),
-                "Do not edit by hand.".to_string(),
-                String::new(),
-                format!("downloaded from: {url}"),
-            ];
-            header
-                .into_iter()
-                .fold(String::new(), |contents, line| {
-                    format!("{contents}{}\n", commented::comment(line, &path))
-                })
-                .pipe(|comment| format!("{marker}{comment}{contents}"))
-        })
-        .with_context(|| eyre!("failed to write to {}", path.display()))?;
+        let contents = if let Some(first_line) = file_contents.lines().next()
+            && first_line.contains(Marker::MARKER)
+        {
+            file_contents.lines().skip(1).collect::<Vec<_>>().join("\n")
+        } else {
+            file_contents.to_string()
+        };
+
+        let generated_notice = [
+            format!("@generated by `{}` <{GITHUB}>", Marker::MARKER),
+            "Do not edit by hand.".to_string(),
+            String::new(),
+            format!("downloaded from: {url}"),
+        ]
+        .into_iter()
+        .fold(String::new(), |previous_lines, line| {
+            format!("{previous_lines}{}\n", commented::comment(line, &path))
+        });
+
+        let contents = format!("{marker}{generated_notice}{contents}");
+
+        stdx::write_file(&path, &contents)?;
 
         log::info!(
             "{CYAN}downloaded{RESET}\n  {BLUE}{url}{RESET} {BLACK}\n  ->{RESET}  {}",
-            path.display()
+            path.show()
         );
 
         Ok::<_, eyre::Error>(())

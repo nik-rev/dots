@@ -1,9 +1,49 @@
 //! Extensions to the standard library
 
+use eyre::{Context as _, ContextCompat as _, Result, eyre};
+use simply_colored::*;
 use std::{
     fs, io, iter,
     path::{Path, PathBuf},
 };
+
+/// Extension trait for [`Path`]
+#[easy_ext::ext(PathExt)]
+pub impl<T: AsRef<Path>> T {
+    /// Show the colored path
+    #[allow(clippy::disallowed_methods, reason = "definition of `show_path`")]
+    fn show(&self) -> String {
+        format!("{CYAN}{}{RESET}", self.as_ref().display())
+    }
+}
+
+/// Write given `contents` to the given `path`.
+///
+/// - If a file already exists at that location, overwrite it
+/// - If we are trying to write to a path that does not have a parent directory,
+///   create the parent directory
+pub fn write_file(path: impl AsRef<Path>, contents: &impl ToString) -> Result<()> {
+    let path = path.as_ref();
+    let contents = contents.to_string();
+
+    remove_file(path).with_context(|| eyre!("failed to remove file: {}", path.show()))?;
+
+    log::warn!("{RED}removed{RESET} {}", path.show());
+
+    let dir = path
+        .parent()
+        .with_context(|| eyre!("failed to obtain parent of {}", path.show()))?;
+
+    // 2. Create parent directory which will contain the file downloaded from the link
+    fs::create_dir_all(dir)
+        .with_context(|| eyre!("failed to create directory for {}", dir.show()))?;
+
+    fs::write(path, contents).with_context(|| eyre!("failed to write to {}", path.show()))?;
+
+    log::info!("wrote to {}", path.show());
+
+    Ok(())
+}
 
 /// Traverses all directories upwards from the `base_dir`
 ///

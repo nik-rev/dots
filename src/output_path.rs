@@ -7,6 +7,8 @@ use eyre::{Context as _, eyre};
 use interpolator::Formattable;
 use tap::Pipe as _;
 
+use crate::stdx::PathExt as _;
+
 /// Represents a path that will be written to.
 ///
 /// The `FromStr` impl for this allow for interpolation, i.e.
@@ -17,7 +19,7 @@ pub struct OutputPath(PathBuf);
 
 impl Display for OutputPath {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.as_ref().display())
+        write!(f, "{}", self.as_ref().show())
     }
 }
 
