@@ -148,7 +148,7 @@ impl Dir {
     pub fn process(self, root: &Path) -> Result<()> {
         let Self { input, output } = self;
 
-        WalkDir::new(input)
+        WalkDir::new(&input)
             .into_iter()
             .flatten()
             .filter(|dir_entry| dir_entry.file_type().is_file())
@@ -158,13 +158,7 @@ impl Dir {
                 let file_contents = fs::read_to_string(&old_location)
                     .with_context(|| eyre!("failed to read path {}", old_location.show()))?;
 
-                let relative_location = old_location.strip_prefix(root).with_context(|| {
-                    eyre!(
-                        "failed to strip prefix {} from {}",
-                        root.show(),
-                        old_location.show()
-                    )
-                })?;
+                let relative_location = old_location.strip_prefix(root)?.strip_prefix(&input)?;
 
                 let (file_contents, new_location) = if let Some(first_line) =
                     file_contents.lines().next()

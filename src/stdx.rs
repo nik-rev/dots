@@ -15,6 +15,17 @@ pub impl<T: AsRef<Path>> T {
     fn show(&self) -> String {
         format!("{CYAN}{}{RESET}", self.as_ref().display())
     }
+
+    /// Like [`Path::strip_prefix`], but includes an informative error message
+    fn strip_prefix(&self, prefix: impl AsRef<Path>) -> Result<&Path> {
+        self.as_ref().strip_prefix(&prefix).with_context(|| {
+            eyre!(
+                "failed to strip prefix {} from {}",
+                prefix.show(),
+                self.show()
+            )
+        })
+    }
 }
 
 /// Write given `contents` to the given `path`.
