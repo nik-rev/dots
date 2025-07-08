@@ -2,14 +2,21 @@ lints.workspace = true
 
 [package]
 name = "dots"
-description = "A cozy dotfiles manager"
+description = "A cozy, simple-to-use dotfiles manager"
 version = "0.1.0"
 edition = "2024"
 authors = ["Nik Revenco <pm@nikrev.com>"]
-repository = "https://github.com/"
+repository = "https://github.com/nik-rev/dots"
+homepage = "https://github.com/nik-rev/dots"
 license = "MIT OR Apache-2.0"
 keywords = []
 categories = []
+
+# The profile that 'cargo-dist' will build with
+[profile.dist]
+inherits = "release"
+codegen-units = 1
+lto = "fat"
 
 [dependencies]
 anstyle = "1.0.11"

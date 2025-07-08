@@ -1,6 +1,6 @@
 # dots
 
-A cozy cross-platform dotfiles manager.
+A cozy, simple-to-use, cross-platform dotfiles manager
 
 ## Copying files
 
