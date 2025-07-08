@@ -1,7 +1,7 @@
 //! Config for `dots`
 
 use std::collections::BTreeMap;
-use std::path::Path;
+use std::path::{self, Path};
 use std::str::FromStr;
 use std::{fs, path::PathBuf};
 
@@ -81,11 +81,11 @@ impl Config {
                 for error in &errors {
                     log::error!("{error}");
                 }
-                if errors.is_empty() {
-                    Err(eyre!("encountered errors when downloading links"))
-                } else {
-                    Ok(())
+                if !errors.is_empty() {
+                    bail!("encountered errors when downloading links");
                 }
+
+                Ok(())
             })?;
 
         self.dirs
@@ -153,9 +153,9 @@ impl Dir {
             .flatten()
             .filter(|dir_entry| dir_entry.file_type().is_file())
             .try_for_each(|file| {
-                let old_location = file.path();
+                let old_location = path::absolute(file.path())?;
 
-                let file_contents = fs::read_to_string(old_location)
+                let file_contents = fs::read_to_string(&old_location)
                     .with_context(|| eyre!("failed to read path {}", old_location.show()))?;
 
                 let relative_location = old_location.strip_prefix(root).with_context(|| {
@@ -189,19 +189,6 @@ impl Dir {
                     )
                 };
 
-                let old_relative_to_cwd_canon = fs::canonicalize(old_location)
-                    .with_context(|| eyre!("failed to canonicalize {}", old_location.show()))?;
-                let old_relative_to_cwd = old_relative_to_cwd_canon
-                    .strip_prefix(root)
-                    .with_context(|| {
-                        eyre!(
-                            "failed to strip prefix {} from {}",
-                            root.show(),
-                            old_relative_to_cwd_canon.show()
-                        )
-                    })?
-                    .show();
-
                 let mut handlebars = Handlebars::new();
                 handlebars
                     .register_template_string("t1", file_contents)
@@ -213,11 +200,6 @@ impl Dir {
 
                 stdx::write_file(new_location.as_ref(), &contents)
                     .context("failed to write output file")?;
-
-                log::info!(
-                    "{CYAN}symlinked{RESET} \n  {old_relative_to_cwd} \
-                    {BLACK}\n  ->  {RESET}{new_location}",
-                );
 
                 Ok::<_, eyre::Error>(())
             })
