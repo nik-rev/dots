@@ -7,6 +7,43 @@ use std::{
     path::{Path, PathBuf},
 };
 
+/// Extension trait for [`Iterator`]
+pub trait IteratorExt: Iterator {
+    /// Collect all of the `Ok(T)` variants into a collection of `T`s
+    /// If any `Err(E)` is found, collect all errors in a collection of `E`s
+    fn try_collect_all<Okays, Errors, Okay, Error>(mut self) -> Result<Okays, Errors>
+    where
+        Self: Iterator<Item = Result<Okay, Error>> + Sized,
+        Okays: Extend<Okay> + Default,
+        Errors: FromIterator<Error>,
+    {
+        let mut oks = Okays::default();
+        while let Some(res) = self.next() {
+            match res {
+                Ok(ok) => oks.extend(iter::once(ok)),
+                Err(err) => {
+                    let err = iter::once(err)
+                        .chain(self.filter_map(Result::err))
+                        .collect::<Errors>();
+                    return Err(err);
+                }
+            }
+        }
+        Ok(oks)
+    }
+
+    /// Collect all of the `Ok(T)` variants into a `Ok(Vec<T>)`
+    /// If any `Err(E)` is found, collect all errors in a `Err(Vec<E>)`
+    fn try_collect_all_vec<Okay, Error>(self) -> Result<Vec<Okay>, Vec<Error>>
+    where
+        Self: Iterator<Item = Result<Okay, Error>> + Sized + ExactSizeIterator,
+    {
+        self.try_collect_all::<Vec<_>, Vec<_>, _, _>()
+    }
+}
+
+impl<A> IteratorExt for A where A: Iterator {}
+
 /// Extension trait for [`Path`]
 #[easy_ext::ext(PathExt)]
 pub impl<T: AsRef<Path>> T {
@@ -90,6 +127,26 @@ mod tests {
     use itertools::Itertools as _;
 
     use super::*;
+
+    #[test]
+    fn try_collect_all() {
+        assert_eq!(
+            vec![Ok(1), Err("1"), Ok(2), Err("2"), Err("3")]
+                .into_iter()
+                .try_collect_all_vec(),
+            Err(vec!["1", "2", "3"])
+        );
+        assert_eq!(
+            vec![Ok::<_, ()>(1), Ok(1), Ok(2), Ok(2), Ok(3)]
+                .into_iter()
+                .try_collect_all_vec(),
+            Ok(vec![1, 1, 2, 2, 3])
+        );
+        assert_eq!(
+            vec![].into_iter().try_collect_all_vec::<(), ()>(),
+            Ok(vec![])
+        );
+    }
 
     #[test]
     fn traverse_upwards() {
