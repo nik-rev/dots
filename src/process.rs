@@ -1,4 +1,7 @@
-//! handle world
+//! In this module, we do the bulk of the work in regards to `dots`.
+//!
+//! The module contains [`handle_world`] function which is a pure function that
+//! resolves all files and links.
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
@@ -22,8 +25,8 @@ pub struct WritePath {
     pub contents: String,
 }
 
-/// Handle the World.
-pub fn handle_world(world: World) -> Result<Vec<WritePath>, Vec<Error>> {
+/// Process the World
+pub fn process(world: World) -> Result<Vec<WritePath>, Vec<Error>> {
     let mut errors = vec![];
 
     let links = world

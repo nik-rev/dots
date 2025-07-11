@@ -1,7 +1,7 @@
 //! `dots` is a cozy dotfiles manager
 
 use clap::Parser as _;
-use dots::handle_world;
+use dots::process;
 use dots::{Cli, PathExt as _, World};
 use eyre::{Context as _, ContextCompat as _, Result, eyre};
 use simply_colored::*;
@@ -35,7 +35,7 @@ fn main() -> Result<()> {
 
     let _ = color_eyre::install();
 
-    let writes = World::new().and_then(handle_world).map_err(|errs| {
+    let writes = World::new().and_then(process).map_err(|errs| {
         for err in errs {
             log::error!("{err}");
         }

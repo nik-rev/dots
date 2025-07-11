@@ -11,7 +11,7 @@ use tap::Pipe as _;
 use walkdir::WalkDir;
 
 use crate::{
-    Config,
+    config::Config,
     output_path::OutputPath,
     stdx::{self, PathExt as _},
 };
