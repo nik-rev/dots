@@ -5,8 +5,8 @@
 
 use std::collections::BTreeMap;
 
+use crate::analysis::Analysis;
 use crate::config::GITHUB;
-use crate::io::Analysis;
 use crate::output_path::OutputPath;
 use crate::{World, config::Marker};
 
@@ -24,7 +24,7 @@ pub fn process(world: World) -> Result<Analysis, Vec<Error>> {
         .links
         .into_iter()
         .map(
-            |crate::io::Link {
+            |crate::world::Link {
                  contents,
                  path,
                  sha256,
@@ -82,7 +82,7 @@ pub fn process(world: World) -> Result<Analysis, Vec<Error>> {
 
                 let contents = format!("{marker}{generated_notice}{contents}");
 
-                Ok(crate::io::WritePath { path, contents })
+                Ok(crate::analysis::WritePath { path, contents })
             },
         )
         .partition_result::<Vec<_>, Vec<_>, _, _>()
@@ -95,7 +95,7 @@ pub fn process(world: World) -> Result<Analysis, Vec<Error>> {
         .files
         .into_iter()
         .map(
-            |crate::io::File {
+            |crate::world::File {
                  old_location,
                  contents,
                  output,
@@ -137,7 +137,7 @@ pub fn process(world: World) -> Result<Analysis, Vec<Error>> {
                     .render("t1", &BTreeMap::<u8, u8>::new())
                     .with_context(|| eyre!("failed to render template for {new_location}"))?;
 
-                Ok::<_, Error>(crate::io::WritePath {
+                Ok::<_, Error>(crate::analysis::WritePath {
                     path: new_location.into_inner(),
                     contents,
                 })
