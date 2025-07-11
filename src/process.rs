@@ -4,9 +4,9 @@
 //! resolves all files and links.
 
 use std::collections::BTreeMap;
-use std::path::PathBuf;
 
 use crate::config::GITHUB;
+use crate::io::Analysis;
 use crate::output_path::OutputPath;
 use crate::{World, config::Marker};
 
@@ -16,24 +16,15 @@ use itertools::Itertools as _;
 use simply_colored::*;
 use tap::Pipe as _;
 
-/// Write contents to the path
-#[derive(Debug)]
-pub struct WritePath {
-    /// Path to write
-    pub path: PathBuf,
-    /// What to write
-    pub contents: String,
-}
-
 /// Process the World
-pub fn process(world: World) -> Result<Vec<WritePath>, Vec<Error>> {
+pub fn process(world: World) -> Result<Analysis, Vec<Error>> {
     let mut errors = vec![];
 
     let links = world
         .links
         .into_iter()
         .map(
-            |crate::world::Link {
+            |crate::io::Link {
                  contents,
                  path,
                  sha256,
@@ -91,7 +82,7 @@ pub fn process(world: World) -> Result<Vec<WritePath>, Vec<Error>> {
 
                 let contents = format!("{marker}{generated_notice}{contents}");
 
-                Ok(WritePath { path, contents })
+                Ok(crate::io::WritePath { path, contents })
             },
         )
         .partition_result::<Vec<_>, Vec<_>, _, _>()
@@ -104,7 +95,7 @@ pub fn process(world: World) -> Result<Vec<WritePath>, Vec<Error>> {
         .files
         .into_iter()
         .map(
-            |crate::world::File {
+            |crate::io::File {
                  old_location,
                  contents,
                  output,
@@ -146,7 +137,7 @@ pub fn process(world: World) -> Result<Vec<WritePath>, Vec<Error>> {
                     .render("t1", &BTreeMap::<u8, u8>::new())
                     .with_context(|| eyre!("failed to render template for {new_location}"))?;
 
-                Ok::<_, Error>(WritePath {
+                Ok::<_, Error>(crate::io::WritePath {
                     path: new_location.into_inner(),
                     contents,
                 })
@@ -162,5 +153,7 @@ pub fn process(world: World) -> Result<Vec<WritePath>, Vec<Error>> {
         return Err(errors);
     }
 
-    Ok(links.into_iter().chain(files).collect())
+    Ok(Analysis {
+        writes: links.into_iter().chain(files).collect(),
+    })
 }
