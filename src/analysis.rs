@@ -8,7 +8,7 @@ use simply_colored::*;
 use crate::PathExt as _;
 
 /// Write contents to the path
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WritePath {
     /// Path to write
     pub path: PathBuf,

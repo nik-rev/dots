@@ -1,8 +1,8 @@
-//! Contains [`World`]
+//! See [`World`] for more info
 
 use std::{
     fs,
-    path::{self, PathBuf},
+    path::{self, Path, PathBuf},
 };
 
 use eyre::{Context as _, ContextCompat as _, Error, Result, eyre};
@@ -16,7 +16,8 @@ use crate::{
     stdx::{self, PathExt as _},
 };
 
-/// Input to the app
+/// This structure represents inputs to the application, with all
+/// paths resolved so the core of `dots` does not need to do any IO.
 #[derive(Debug)]
 pub struct World {
     /// Path which contains the config file
@@ -60,8 +61,7 @@ pub struct File {
 
 impl World {
     /// Create the `World`
-    pub fn new() -> Result<Self, Vec<Error>> {
-        let cwd = std::env::current_dir().map_err(single_err)?;
+    pub fn new(cwd: &Path) -> Result<Self, Vec<Error>> {
         // Directory which contains the config file
         let root = cwd
             .pipe_ref(stdx::traverse_upwards)

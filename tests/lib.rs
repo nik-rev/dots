@@ -1,51 +1,85 @@
 #![cfg(test)]
 //! tests
 
-// use std::path::{Path, PathBuf};
+use etcetera::BaseStrategy as _;
+use pretty_assertions::assert_eq;
 
-// use clap::Parser as _;
-// use dots::{Cli, Config};
+use std::{collections::HashSet, fs, path::Path};
 
-// struct Item {
-//     path: PathBuf,
-//     contents: Option<String>,
-// }
+use dots::{World, WritePath, process};
+use tap::Pipe as _;
+use tempfile::tempdir;
 
-// impl From<PathBuf> for Item {
-//     fn from(value: PathBuf) -> Self {
-//         Item {
-//             path: value,
-//             contents: None,
-//         }
-//     }
-// }
+/// hum
+///
+/// # Panics
+///
+/// ?
+#[track_caller]
+pub fn check(
+    cwd: impl AsRef<Path>,
+    paths: impl IntoIterator<Item = (impl AsRef<Path>, impl AsRef<str>)>,
+) {
+    // NOTE: we use a HashSet internally for the test because we don't care about the order in which paths get written
+    let writes = World::new(cwd.as_ref())
+        .unwrap()
+        .pipe(process)
+        .unwrap()
+        .writes
+        .into_iter()
+        .pipe(HashSet::from_iter);
 
-// impl From<(PathBuf, String)> for Item {
-//     fn from((path, contents): (PathBuf, String)) -> Self {
-//         Item {
-//             path,
-//             contents: Some(contents),
-//         }
-//     }
-// }
+    assert_eq!(
+        writes,
+        paths
+            .into_iter()
+            .map(|(path, contents)| WritePath {
+                path: path.as_ref().to_path_buf(),
+                contents: contents.as_ref().to_string()
+            })
+            .collect::<HashSet<_>>()
+    );
+}
 
-// fn run<'a, 'b>(
-//     cwd: &Path,
-//     // A list of paths to create
-//     paths: impl IntoIterator<Item = impl Into<Item<'a, 'b>>>,
-//     args: impl IntoIterator<Item = impl Into<std::ffi::OsString> + Clone>,
-// ) {
-//     let cli = Cli::try_parse_from(args).unwrap();
-//     let conf = Config::find(cwd);
-//     let paths: Vec<Item> = paths.into_iter().map(Into::into).collect();
-// }
+fn create_files_in(
+    dir: &Path,
+    files: impl IntoIterator<Item = (impl AsRef<Path>, impl AsRef<str>)>,
+) {
+    for (path, contents) in files {
+        let path = dir.join(path.as_ref());
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(&path, contents.as_ref()).unwrap();
+    }
+}
 
-// #[test]
-// fn hmm() {
-//     let tmp = tempfile::tempdir().unwrap();
-//     let tmp = tmp.path();
+#[test]
+fn it_works() {
+    let dir = tempdir().unwrap();
+    let dir = dir.path();
 
-//     run(tmp, [("dots.toml", "foobar")], "--help");
+    let config_dir = etcetera::choose_base_strategy().unwrap().config_dir();
 
-//     let conf = tmp.join("dots.toml");
-// }
+    create_files_in(
+        dir,
+        [
+            (
+                "dots.toml",
+                r#"
+                [[dir]]
+                input = "configs"
+                output = "{config}"
+                "#,
+            ),
+            ("configs/foo.txt", "foo"),
+            ("configs/bar.txt", "bar"),
+        ],
+    );
+
+    check(
+        dir,
+        [
+            (config_dir.join("foo.txt"), "foo"),
+            (config_dir.join("bar.txt"), "bar"),
+        ],
+    );
+}

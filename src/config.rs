@@ -19,9 +19,9 @@ pub struct Config {
     /// A list of links
     ///
     /// File located at the link will be fetched into the appropriate location
-    #[serde(rename = "link")]
+    #[serde(rename = "link", default)]
     pub links: Vec<Link>,
-    #[serde(rename = "dir")]
+    #[serde(rename = "dir", default)]
     /// List of directories to process
     pub dirs: Vec<Dir>,
 }

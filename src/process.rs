@@ -1,7 +1,7 @@
 //! In this module, we do the bulk of the work in regards to `dots`.
 //!
-//! The module contains [`handle_world`] function which is a pure function that
-//! resolves all files and links.
+//! The module contains [`handle_world`] function. It takes the state of the
+//! [`World`] and processes it, yielding an [`Analysis`]
 
 use std::collections::BTreeMap;
 

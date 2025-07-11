@@ -3,9 +3,10 @@
 use clap::Parser as _;
 use dots::process;
 use dots::{Cli, World};
-use eyre::{Result, eyre};
+use eyre::{Context as _, Result, eyre};
 use simply_colored::*;
 use std::io::Write as _;
+use tap::Pipe as _;
 
 use log::Level;
 
@@ -31,7 +32,9 @@ fn main() -> Result<()> {
 
     let _ = color_eyre::install();
 
-    World::new()
+    std::env::current_dir()
+        .context("failed to obtain current working directory")?
+        .pipe_deref(World::new)
         .and_then(process)
         .map_err(|errs| {
             for err in errs {
