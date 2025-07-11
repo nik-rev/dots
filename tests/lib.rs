@@ -10,13 +10,8 @@ use dots::{World, WritePath, process};
 use tap::Pipe as _;
 use tempfile::tempdir;
 
-/// hum
-///
-/// # Panics
-///
-/// ?
 #[track_caller]
-pub fn check(
+fn check(
     cwd: impl AsRef<Path>,
     paths: impl IntoIterator<Item = (impl AsRef<Path>, impl AsRef<str>)>,
 ) {
