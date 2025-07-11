@@ -16,7 +16,7 @@ const STYLES: clap::builder::Styles = clap::builder::Styles::styled()
     .invalid(AnsiColor::BrightYellow.on_default().effects(Effects::BOLD));
 
 /// Command-line interface
-#[derive(Parser)]
+#[derive(Parser, Debug, Copy, Clone)]
 #[command(version, styles = STYLES, long_about = None)]
 #[allow(clippy::struct_excessive_bools, reason = "normal for CLIs")]
 pub struct Cli {

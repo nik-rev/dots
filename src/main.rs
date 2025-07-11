@@ -1,21 +1,20 @@
 //! `dots` is a cozy dotfiles manager
 
 use clap::Parser as _;
-use config::Config;
-use eyre::{Context as _, Result};
+use dots::handle_world;
+use dots::{Cli, PathExt as _, World};
+use eyre::{Context as _, ContextCompat as _, Result, eyre};
 use simply_colored::*;
 
-use std::io::Write as _;
-
-mod cli;
-mod config;
-mod output_path;
-mod stdx;
+use std::{
+    fs,
+    io::{self, Write as _},
+};
 
 use log::Level;
 
 fn main() -> Result<()> {
-    let cli = cli::Cli::parse();
+    let cli = Cli::parse();
 
     env_logger::Builder::new()
         .filter_level(cli.verbosity.into())
@@ -36,10 +35,38 @@ fn main() -> Result<()> {
 
     let _ = color_eyre::install();
 
-    Config::find()
-        .context("failed to find config")?
-        .process()
-        .context("failed to process config")?;
+    let writes = World::new().and_then(handle_world).map_err(|errs| {
+        for err in errs {
+            log::error!("{err}");
+        }
+
+        eyre!("encountered errors")
+    })?;
+
+    for dots::WritePath { path, contents } in writes {
+        let contents = contents.to_string();
+
+        match fs::remove_file(&path) {
+            Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(()),
+            Err(err) => Err(err),
+            Ok(()) => Ok(()),
+        }
+        .with_context(|| eyre!("failed to remove file: {}", path.show()))?;
+
+        log::warn!("{RED}removed{RESET} {}", path.show());
+
+        let dir = path
+            .parent()
+            .with_context(|| eyre!("failed to obtain parent of {}", path.show()))?;
+
+        // 2. Create parent directory which will contain the file downloaded from the link
+        fs::create_dir_all(dir)
+            .with_context(|| eyre!("failed to create directory for {}", dir.show()))?;
+
+        fs::write(&path, contents).with_context(|| eyre!("failed to write to {}", path.show()))?;
+
+        log::info!("wrote to {}", path.show());
+    }
 
     Ok(())
 }
