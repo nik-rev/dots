@@ -1,7 +1,6 @@
 //! `dots` is a cozy dotfiles manager
 
 use clap::Parser as _;
-use dots::process;
 use dots::{Cli, World};
 use eyre::{Context as _, Result, eyre};
 use simply_colored::*;
@@ -35,7 +34,7 @@ fn main() -> Result<()> {
     std::env::current_dir()
         .context("failed to obtain current working directory")?
         .pipe_deref(World::new)
-        .and_then(process)
+        .and_then(World::process)
         .map_err(|errs| {
             for err in errs {
                 log::error!("{err}");
