@@ -58,6 +58,17 @@ fn create_files_in(
     }
 }
 
+#[bon::builder]
+fn link(contents: &str, path: &str, sha256: Option<&str>, marker: Option<&str>) -> Link {
+    Link {
+        url: "dummy".into(),
+        contents: contents.to_string(),
+        path: path.into(),
+        sha256: sha256.as_ref().map(ToString::to_string),
+        marker: marker.as_ref().map(ToString::to_string),
+    }
+}
+
 #[test]
 fn dirs() {
     let dir = tempdir().unwrap();
@@ -108,17 +119,6 @@ fn dirs() {
             (strat.home_dir().join("baz").join("bar.txt"), "bar"),
         ],
     );
-}
-
-#[bon::builder]
-fn link(contents: &str, path: &str, sha256: Option<&str>, marker: Option<&str>) -> Link {
-    Link {
-        url: "dummy".into(),
-        contents: contents.to_string(),
-        path: path.into(),
-        sha256: sha256.as_ref().map(ToString::to_string),
-        marker: marker.as_ref().map(ToString::to_string),
-    }
 }
 
 #[test]
