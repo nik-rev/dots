@@ -78,3 +78,54 @@ fn it_works() {
         ],
     );
 }
+
+#[test]
+fn multiple_dirs() {
+    let dir = tempdir().unwrap();
+    let dir = dir.path();
+
+    let strat = etcetera::choose_base_strategy().unwrap();
+
+    create_files_in(
+        dir,
+        [
+            (
+                "dots.toml",
+                r#"
+                [[dir]]
+                input = "configs"
+                output = "{config}"
+                [[dir]]
+                input = "data"
+                output = "{data}/foo/"
+                [[dir]]
+                input = "cache"
+                output = "{cache}/bar/"
+                [[dir]]
+                input = "cache"
+                output = "{home}/baz/"
+                "#,
+            ),
+            ("configs/foo.txt", "foo"),
+            ("configs/bar.txt", "bar"),
+            ("data/foo.txt", "foo"),
+            ("data/bar.txt", "bar"),
+            ("cache/foo.txt", "foo"),
+            ("cache/bar.txt", "bar"),
+        ],
+    );
+
+    check(
+        dir,
+        [
+            (strat.config_dir().join("foo.txt"), "foo"),
+            (strat.config_dir().join("bar.txt"), "bar"),
+            (strat.data_dir().join("foo").join("foo.txt"), "foo"),
+            (strat.data_dir().join("foo").join("bar.txt"), "bar"),
+            (strat.cache_dir().join("bar").join("foo.txt"), "foo"),
+            (strat.cache_dir().join("bar").join("bar.txt"), "bar"),
+            (strat.home_dir().join("baz").join("foo.txt"), "foo"),
+            (strat.home_dir().join("baz").join("bar.txt"), "bar"),
+        ],
+    );
+}
