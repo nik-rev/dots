@@ -128,8 +128,6 @@ fn links() {
 
     create_dummy_config_file(dir);
 
-    // NOTE: needed
-
     check(
         dir,
         |mut world| {
