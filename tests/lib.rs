@@ -227,3 +227,50 @@ fn marker_does_not_affect_sha256() {
         ],
     );
 }
+
+#[test]
+fn hash_mismatch_is_err() {
+    /// Should be any string which is unlikely to exist as an actual file
+    const UNIQUE_FILENAME: &str =
+        "2c26b46b68ffc68ff99b45ec1d304134e3422d70e483bfa0f98a5e886266e7ae";
+    let dir = tempdir().unwrap();
+    let dir = dir.path();
+
+    let strat = etcetera::choose_base_strategy().unwrap();
+
+    fs::write(
+        dir.join("dots.toml"),
+        r#"
+        [[dir]]
+        input = "configs"
+        output = "{config_dir}"
+        "#,
+    )
+    .unwrap();
+
+    fs::create_dir_all(dir.join("configs")).unwrap();
+    fs::write(dir.join("configs").join(UNIQUE_FILENAME), "foo").unwrap();
+
+    let mut world = World::new(dir).unwrap();
+    world.links = vec![
+        link()
+            .contents("foo")
+            .path("configs/foo-1.txt")
+            .sha256("incorrect-hash")
+            .call(),
+    ];
+
+    assert!(
+        world
+            .process()
+            .unwrap_err()
+            .first()
+            .unwrap()
+            .to_string()
+            .contains("hash mismatch")
+    );
+
+    // this should NOT have been written even though it is specified in the config
+    // Reason: `dots` is atomic. If one operation failed, all should fail
+    fs::read_to_string(strat.config_dir().join("configs").join(UNIQUE_FILENAME)).unwrap_err();
+}
