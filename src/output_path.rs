@@ -30,44 +30,22 @@ impl FromStr for OutputPath {
         let strategy = etcetera::choose_base_strategy()
             .with_context(|| eyre!("failed to obtain base strategy"))?;
 
-        [
-            (
-                "config_dir",
-                strategy
-                    .config_dir()
-                    .to_string_lossy()
-                    .to_string()
-                    .pipe_ref(Formattable::display),
-            ),
-            (
-                "data_dir",
-                strategy
-                    .data_dir()
-                    .to_string_lossy()
-                    .to_string()
-                    .pipe_ref(Formattable::display),
-            ),
-            (
-                "cache_dir",
-                strategy
-                    .cache_dir()
-                    .to_string_lossy()
-                    .to_string()
-                    .pipe_ref(Formattable::display),
-            ),
-        ]
-        .pipe(HashMap::from)
-        .pipe(|hm| interpolator::format(s, &hm))
-        .with_context(|| eyre!("failed to parse marker for: {s}"))
-        // expand tilde: ~/foo -> /home/user/foo
-        .map(|p| {
-            if let Ok(p) = p.strip_prefix("~/") {
-                strategy.home_dir().join(p)
-            } else {
-                PathBuf::from(p)
-            }
-        })
-        .map(OutputPath::new)
+        let data_dir = strategy.data_dir().to_string_lossy().to_string();
+        let config_dir = strategy.config_dir().to_string_lossy().to_string();
+        let cache_dir = strategy.cache_dir().to_string_lossy().to_string();
+
+        interpolator::context!(data_dir, config_dir, cache_dir)
+            .pipe(|hm| interpolator::format(s, &hm))
+            .with_context(|| eyre!("failed to parse marker for: {s}"))
+            // expand tilde: ~/foo -> /home/user/foo
+            .map(|p| {
+                if let Ok(p) = p.strip_prefix("~/") {
+                    strategy.home_dir().join(p)
+                } else {
+                    PathBuf::from(p)
+                }
+            })
+            .map(OutputPath::new)
     }
 }
 
