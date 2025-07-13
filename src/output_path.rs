@@ -34,7 +34,7 @@ impl FromStr for OutputPath {
         let cache_dir = strategy.cache_dir().to_string_lossy().to_string();
 
         interpolator::context!(data_dir, config_dir, cache_dir)
-            .pipe(|hm| interpolator::format(s, &hm))
+            .pipe(|cx| interpolator::format(s, &cx))
             .with_context(|| eyre!("failed to parse marker for: {s}"))
             // expand tilde: ~/foo -> /home/user/foo
             .map(|p| {
