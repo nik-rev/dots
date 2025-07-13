@@ -30,6 +30,12 @@ impl FromStr for OutputPath {
         let strategy = etcetera::choose_base_strategy()
             .with_context(|| eyre!("failed to obtain base strategy"))?;
 
+        // let (s, home_dir) = if let Some(s) = s.strip_prefix("~/") {
+        //     (s, Some())
+        // } else {
+        //     (s, None)
+        // };
+
         [
             (
                 "config",
@@ -55,19 +61,18 @@ impl FromStr for OutputPath {
                     .to_string()
                     .pipe_ref(Formattable::display),
             ),
-            (
-                "home",
-                strategy
-                    .home_dir()
-                    .to_string_lossy()
-                    .to_string()
-                    .pipe_ref(Formattable::display),
-            ),
         ]
         .pipe(HashMap::from)
         .pipe(|hm| interpolator::format(s, &hm))
         .with_context(|| eyre!("failed to parse marker for: {s}"))
-        .map(PathBuf::from)
+        // expand tilde: ~/foo -> /home/user/foo
+        .map(|p| {
+            if let Ok(p) = p.strip_prefix("~/") {
+                strategy.home_dir().join(p)
+            } else {
+                PathBuf::from(p)
+            }
+        })
         .map(OutputPath::new)
     }
 }

@@ -19,7 +19,6 @@ So a file `~/my_configs/foo/bar.txt` will be copied to `~/.config/foo/bar.txt` o
 `{config}` expands to the appropriate config directory on your platform. These are the available expansions:
 
 - `{config}`: Config directory
-- `{home}`: Home directory
 - `{cache}`: Cache directory
 - `{state_dir}`: State directory
 
@@ -28,7 +27,7 @@ So a file `~/my_configs/foo/bar.txt` will be copied to `~/.config/foo/bar.txt` o
 You can control where each file will be copied by adding a single line at the top of a file. So if `configs/glazewm.yaml`'s first line is this:
 
 ```
-@dots --path "{home}/.glzr/glazewm/config.yaml"
+@dots --path "~/.glzr/glazewm/config.yaml"
 ```
 
 It will copy the file to the appropriate location in the home folder, instead of copying it in the config directory.
