@@ -9,17 +9,17 @@ With the following `~/dots.toml`:
 ```toml
 [[dir]]
 input = "my_configs"
-output = "{config}/foo"
+output = "{config_dir}/foo"
 ```
 
-All files within `~/my_configs` (recursively) will be copied to the `{config}/foo` directory, at the same location.
+All files within `~/my_configs` (recursively) will be copied to the `{config_dir}/foo` directory, at the same location.
 
 So a file `~/my_configs/foo/bar.txt` will be copied to `~/.config/foo/bar.txt` on Linux (on Windows and MacOS it will use the platform's respective directory)
 
-`{config}` expands to the appropriate config directory on your platform. These are the available expansions:
+`{config_dir}` expands to the appropriate config directory on your platform. These are the available expansions:
 
-- `{config}`: Config directory
-- `{cache}`: Cache directory
+- `{config_dir}`: Config directory
+- `{cache_dir}`: Cache directory
 - `{state_dir}`: State directory
 
 ## Granular control for each file

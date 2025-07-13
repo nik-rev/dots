@@ -30,15 +30,9 @@ impl FromStr for OutputPath {
         let strategy = etcetera::choose_base_strategy()
             .with_context(|| eyre!("failed to obtain base strategy"))?;
 
-        // let (s, home_dir) = if let Some(s) = s.strip_prefix("~/") {
-        //     (s, Some())
-        // } else {
-        //     (s, None)
-        // };
-
         [
             (
-                "config",
+                "config_dir",
                 strategy
                     .config_dir()
                     .to_string_lossy()
@@ -46,7 +40,7 @@ impl FromStr for OutputPath {
                     .pipe_ref(Formattable::display),
             ),
             (
-                "data",
+                "data_dir",
                 strategy
                     .data_dir()
                     .to_string_lossy()
@@ -54,7 +48,7 @@ impl FromStr for OutputPath {
                     .pipe_ref(Formattable::display),
             ),
             (
-                "cache",
+                "cache_dir",
                 strategy
                     .cache_dir()
                     .to_string_lossy()

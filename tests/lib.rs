@@ -84,13 +84,13 @@ fn dirs() {
                 r#"
                 [[dir]]
                 input = "configs"
-                output = "{config}"
+                output = "{config_dir}"
                 [[dir]]
                 input = "data"
-                output = "{data}/foo/"
+                output = "{data_dir}/foo/"
                 [[dir]]
                 input = "cache"
-                output = "{cache}/bar/"
+                output = "{cache_dir}/bar/"
                 [[dir]]
                 input = "cache"
                 output = "~/baz/"
