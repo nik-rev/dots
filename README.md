@@ -1,6 +1,32 @@
 # dots
 
-A cozy, simple-to-use, cross-platform dotfiles manager
+A cozy, simple to use  dotfiles manager written in Rust
+
+## Overview
+
+A single file `dots.toml` represents configuration for `dots`. It defines:
+
+- a list of URLs to download to the specified paths
+- a list of paths to copy to another path
+
+Example config:
+
+```toml
+# all files from `configs` will be copied to `output`
+[[dir]]
+input = "configs"
+# this expands to your config directory: e.g. ~/.config
+output = "{config}"
+
+# each link's `path` is relative to the `dots.toml` file
+[[link]]
+url = "https://raw.githubusercontent.com/catppuccin/nushell/05987d258cb765a881ee1f2f2b65276c8b379658/themes/catppuccin_mocha.nu"
+path = "configs/nushell/catppuccin.nu"
+
+[[link]]
+url = "https://raw.githubusercontent.com/catppuccin/yazi/1a8c939e47131f2c4bd07a2daea7773c29e2a774/themes/mocha/catppuccin-mocha-blue.toml"
+path = "configs/yazi/theme.toml"
+```
 
 ## Copying files
 
