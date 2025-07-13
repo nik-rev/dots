@@ -1,10 +1,9 @@
 //! Contains [`OutputPath`]
 
-use std::{collections::HashMap, fmt::Display, path::PathBuf, str::FromStr};
+use std::{fmt::Display, path::PathBuf, str::FromStr};
 
 use etcetera::BaseStrategy as _;
 use eyre::{Context as _, eyre};
-use interpolator::Formattable;
 use tap::Pipe as _;
 
 use crate::stdx::PathExt as _;
