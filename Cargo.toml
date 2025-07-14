@@ -12,6 +12,12 @@ license = "MIT OR Apache-2.0"
 keywords = []
 categories = []
 
+[package.metadata.wix]
+upgrade-guid = "B7B1D28F-6AD7-4F72-84D5-1A6774502814"
+path-guid = "5D612CC6-D5A6-4569-8882-FD20BA18465D"
+license = false
+eula = false
+
 # The profile that 'cargo-dist' will build with
 [profile.dist]
 inherits = "release"
