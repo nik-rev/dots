@@ -6,7 +6,7 @@ use pretty_assertions::assert_eq;
 
 use std::{collections::HashSet, convert, env, fs, path::Path};
 
-use dots::{Link, World, WritePath};
+use dots_bin::{Link, World, WritePath};
 use tap::Pipe as _;
 use tempfile::tempdir;
 

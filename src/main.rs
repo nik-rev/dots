@@ -1,7 +1,7 @@
 //! `dots` is a cozy dotfiles manager
 
 use clap::Parser as _;
-use dots::{Cli, World};
+use dots_bin::{Cli, World};
 use eyre::{Context as _, Result, eyre};
 use simply_colored::*;
 use std::io::Write as _;
