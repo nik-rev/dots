@@ -29,10 +29,6 @@ impl FromStr for OutputPath {
         let strategy = etcetera::choose_base_strategy()
             .with_context(|| eyre!("failed to obtain base strategy"))?;
 
-        let data_dir = strategy.data_dir().to_string_lossy().to_string();
-        let config_dir = strategy.config_dir().to_string_lossy().to_string();
-        let cache_dir = strategy.cache_dir().to_string_lossy().to_string();
-
         // expand tilde: ~/foo -> /home/user/foo
         let s = if let Some(s) = s.strip_prefix("~/") {
             strategy.home_dir().join(s).to_string_lossy().to_string()
