@@ -3,7 +3,7 @@
 use std::{fmt::Display, path::PathBuf, str::FromStr};
 
 use etcetera::BaseStrategy as _;
-use eyre::{Context as _, eyre};
+use eyre::{Context as _, bail, eyre};
 
 use crate::stdx::PathExt as _;
 
@@ -58,15 +58,10 @@ impl FromStr for OutputPath {
                 "cache_dir" => strategy.cache_dir(),
                 s if s.starts_with('$') => {
                     let env = s.strip_prefix("$").expect("it starts with `$`");
-                    let Ok(var) = std::env::var(env) else {
-                        continue;
-                    };
+                    let var = std::env::var(env).context("env variable not found")?;
                     var.into()
                 }
-                var => {
-                    log::warn!("unknown variable: {var}");
-                    continue;
-                }
+                var => bail!("unknown variable: {var}"),
             };
             let path = path.to_string_lossy().to_string();
 
@@ -101,5 +96,22 @@ mod tests {
                 .config_dir()
                 .into()
         );
+    }
+
+    #[test]
+    fn parse_fail() {
+        let err = "{$ENV_VARIABLE_WHICH_DOES_NOT_EXIST_241503142350}"
+            .parse::<OutputPath>()
+            .unwrap_err()
+            .to_string();
+
+        assert!(err.contains("env variable not found"));
+
+        let err = "{this_variable_does_not_exist}"
+            .parse::<OutputPath>()
+            .unwrap_err()
+            .to_string();
+
+        assert!(err.contains("unknown variable"));
     }
 }
