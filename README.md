@@ -115,3 +115,37 @@ C-j = "join_selections_space"
 ```
 
 All instances of `{{> rebindings }}` will be replaced by the `inline` block. This is just one of many features that a templating language provides!
+
+## Installation
+
+Supported platforms: Linux, macOS and Windows
+
+### Shell
+
+```sh
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/nik-rev/dots/releases/latest/download/dots-installer.sh | sh
+```
+
+### PowerShell
+
+```sh
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/nik-rev/dots/releases/latest/download/dots-installer.ps1 | iex"
+```
+
+### Homebrew
+
+```sh
+brew install nik-rev/tap/dots
+```
+
+### Cargo
+
+```sh
+cargo install dots
+```
+
+### Nix
+
+```bash
+nix profile install github:nik-rev/dots/main
+```
