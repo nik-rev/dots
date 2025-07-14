@@ -1,7 +1,7 @@
 lints.workspace = true
 
 [package]
-name = "dots"
+name = "dots-bin"
 description = "A cozy, simple-to-use dotfiles manager"
 version = "0.2.0"
 edition = "2024"
@@ -17,6 +17,9 @@ upgrade-guid = "B7B1D28F-6AD7-4F72-84D5-1A6774502814"
 path-guid = "5D612CC6-D5A6-4569-8882-FD20BA18465D"
 license = false
 eula = false
+
+[package.metadata.dist]
+formula = "dots"
 
 # The profile that 'cargo-dist' will build with
 [profile.dist]
