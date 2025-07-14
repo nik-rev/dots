@@ -63,7 +63,10 @@ impl FromStr for OutputPath {
                     };
                     var.into()
                 }
-                _ => continue,
+                var => {
+                    log::warn!("unknown variable: {var}");
+                    continue;
+                }
             };
             let path = path.to_string_lossy().to_string();
 
@@ -82,5 +85,21 @@ impl<'de> serde::Deserialize<'de> for OutputPath {
         String::deserialize(deserializer)?
             .parse::<Self>()
             .map_err(serde::de::Error::custom)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse() {
+        assert_eq!(
+            "{config_dir}".parse::<OutputPath>().unwrap(),
+            etcetera::choose_base_strategy()
+                .unwrap()
+                .config_dir()
+                .into()
+        );
     }
 }

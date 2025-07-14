@@ -23,7 +23,7 @@ Example config:
 # - ~/.config/bar/bar.txt
 input = "configs"
 # this expands to your config directory: e.g. ~/.config
-output = "{config}"
+output = "{config_dir}"
 
 # each link's `path` is relative to the `dots.toml` file
 [[link]]
@@ -62,7 +62,7 @@ So a file `~/my_configs/foo/bar.txt` will be copied to `~/.config/foo/bar.txt` o
 You can control where each file will be copied by adding a single line at the top of a file. So if `configs/glazewm.yaml`'s first line is this:
 
 ```
-@dots --path "{config}/.glzr/glazewm/config.yaml"
+@dots --path "{config_dir}/.glzr/glazewm/config.yaml"
 ```
 
 It will copy the file to the appropriate location in the home folder, instead of copying it in the config directory.
