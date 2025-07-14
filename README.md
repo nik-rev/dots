@@ -141,7 +141,7 @@ brew install nik-rev/tap/dots
 ### Cargo
 
 ```sh
-cargo install dots
+cargo install dots-bin
 ```
 
 ### Nix
