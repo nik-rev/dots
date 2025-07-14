@@ -13,7 +13,7 @@ use crate::stdx::PathExt as _;
 /// The `FromStr` impl for this allow for interpolation, i.e.
 /// if the config directory is `~/.config`, then `{config}/helix` will
 /// parse as `~/.config/helix`
-#[nutype::nutype(derive(AsRef, Clone, Debug))]
+#[nutype::nutype(derive(AsRef, Clone, Debug, From, PartialEq))]
 pub struct OutputPath(PathBuf);
 
 impl Display for OutputPath {
@@ -33,18 +33,49 @@ impl FromStr for OutputPath {
         let config_dir = strategy.config_dir().to_string_lossy().to_string();
         let cache_dir = strategy.cache_dir().to_string_lossy().to_string();
 
-        interpolator::context!(data_dir, config_dir, cache_dir)
-            .pipe(|cx| interpolator::format(s, &cx))
-            .with_context(|| eyre!("failed to parse marker for: {s}"))
-            // expand tilde: ~/foo -> /home/user/foo
-            .map(|p| {
-                if let Ok(p) = p.strip_prefix("~/") {
-                    strategy.home_dir().join(p)
-                } else {
-                    PathBuf::from(p)
+        // expand tilde: ~/foo -> /home/user/foo
+        let s = if let Some(s) = s.strip_prefix("~/") {
+            strategy.home_dir().join(s).to_string_lossy().to_string()
+        } else {
+            s.to_string()
+        };
+
+        let mut chars = s.chars();
+        let mut total = String::new();
+
+        while let Some(ch) = chars.next() {
+            if ch != '{' {
+                total.push(ch);
+                continue;
+            }
+
+            // if it's '{', now everything inside is a variable
+            let mut variable = String::new();
+            while let Some(ch) = chars.next()
+                && ch != '}'
+            {
+                variable.push(ch);
+            }
+
+            let path = match variable.as_str() {
+                "data_dir" => strategy.data_dir(),
+                "config_dir" => strategy.config_dir(),
+                "cache_dir" => strategy.cache_dir(),
+                s if s.starts_with('$') => {
+                    let env = s.strip_prefix("$").expect("it starts with `$`");
+                    let Ok(var) = std::env::var(env) else {
+                        continue;
+                    };
+                    var.into()
                 }
-            })
-            .map(OutputPath::new)
+                _ => continue,
+            };
+            let path = path.to_string_lossy().to_string();
+
+            total.push_str(&path);
+        }
+
+        Ok(OutputPath::new(total.into()))
     }
 }
 

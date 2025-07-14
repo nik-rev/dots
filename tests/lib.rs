@@ -4,7 +4,7 @@
 use etcetera::BaseStrategy as _;
 use pretty_assertions::assert_eq;
 
-use std::{collections::HashSet, convert, fs, path::Path};
+use std::{collections::HashSet, convert, env, fs, path::Path};
 
 use dots::{Link, World, WritePath};
 use tap::Pipe as _;
@@ -273,4 +273,49 @@ fn hash_mismatch_is_err() {
     // this should NOT have been written even though it is specified in the config
     // Reason: `dots` is atomic. If one operation failed, all should fail
     fs::read_to_string(strat.config_dir().join("configs").join(UNIQUE_FILENAME)).unwrap_err();
+}
+
+#[test]
+fn env_variable_interpolation() {
+    let dir = tempdir().unwrap();
+    let dir = dir.path();
+
+    let strat = etcetera::choose_base_strategy().unwrap();
+
+    // SAFETY: variable is only accessed from a single thread
+    unsafe {
+        env::set_var("VARIABLE_FOO", "<foo>");
+    }
+    // SAFETY: variable is only accessed from a single thread
+    unsafe {
+        env::set_var("VARIABLE_BAR", "<bar>");
+    }
+
+    create_files_in(
+        dir,
+        [
+            (
+                "dots.toml",
+                r#"
+                [[dir]]
+                input = "configs"
+                output = "{config_dir}/{$VARIABLE_FOO}/{$VARIABLE_BAR}"
+                "#,
+            ),
+            ("configs/foo.txt", "foo"),
+        ],
+    );
+
+    check(
+        dir,
+        convert::identity,
+        [(
+            strat
+                .config_dir()
+                .join("<foo>")
+                .join("<bar>")
+                .join("foo.txt"),
+            "foo",
+        )],
+    );
 }

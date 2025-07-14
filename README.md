@@ -53,12 +53,14 @@ So a file `~/my_configs/foo/bar.txt` will be copied to `~/.config/foo/bar.txt` o
 You can control where each file will be copied by adding a single line at the top of a file. So if `configs/glazewm.yaml`'s first line is this:
 
 ```
-@dots --path "~/.glzr/glazewm/config.yaml"
+@dots --path "{config}/.glzr/glazewm/config.yaml"
 ```
 
 It will copy the file to the appropriate location in the home folder, instead of copying it in the config directory.
 
 As long as the first line *contains* `@dots ...` then it will work.
+
+You can also use `{$ENV_VARIABLE}` in interpolations, e.g. `{$HOME}`
 
 ## Links
 
