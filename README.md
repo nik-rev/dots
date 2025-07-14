@@ -12,15 +12,24 @@ A single file `dots.toml` represents configuration for `dots`. It defines:
 Example config:
 
 ```toml
-# all files from `configs` will be copied to `output`
 [[dir]]
+# all files from the `input` directory will be recursively copied to `output`
+# e.g. if you have (relative to the dir containing `dots.toml`):
+# - configs/foo.txt
+# - configs/bar/bar.txt
+#
+# Those files will be copied to (if your config directory is ~/.config):
+# - ~/.config/foo.txt
+# - ~/.config/bar/bar.txt
 input = "configs"
 # this expands to your config directory: e.g. ~/.config
 output = "{config}"
 
 # each link's `path` is relative to the `dots.toml` file
 [[link]]
+# contents of the file at this URL
 url = "https://raw.githubusercontent.com/catppuccin/nushell/05987d258cb765a881ee1f2f2b65276c8b379658/themes/catppuccin_mocha.nu"
+# will be downloaded to this path
 path = "configs/nushell/catppuccin.nu"
 
 [[link]]
