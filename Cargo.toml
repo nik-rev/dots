@@ -3,7 +3,7 @@ lints.workspace = true
 [package]
 name = "dots-bin"
 description = "A cozy, simple-to-use dotfiles manager"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 authors = ["Nik Revenco <pm@nikrev.com>"]
 repository = "https://github.com/nik-rev/dots"
@@ -11,6 +11,13 @@ homepage = "https://github.com/nik-rev/dots"
 license = "MIT OR Apache-2.0"
 keywords = []
 categories = []
+
+[[bin]]
+name = "dots"
+path = "src/main.rs"
+
+[lib]
+name = "dots"
 
 [package.metadata.wix]
 upgrade-guid = "B7B1D28F-6AD7-4F72-84D5-1A6774502814"

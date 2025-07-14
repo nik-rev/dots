@@ -1,3 +1,7 @@
+# v0.2.1
+
+- Fixed binary name, it will now be `dots` instead of `dots-bin`
+
 # v0.2.0
 
 - Add a verbosity flag (`-q...` and `-v...`) to control logging level (default: INFO)
