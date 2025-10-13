@@ -10,10 +10,6 @@ license = "MIT OR Apache-2.0"
 keywords = []
 categories = []
 
-[workspace]
-members = [".", "commented", "commented/script"]
-default-members = ["."]
-
 [[bin]]
 name = "dots"
 path = "src/main.rs"
@@ -46,7 +42,7 @@ clap = { version = "4.5.41", features = [
 ] }
 clap-verbosity-flag = "3.0.3"
 color-eyre = "0.6.5"
-commented = { features = ["glob"], path = "commented" }
+commented = "0.2"
 easy-ext = "1.0.2"
 env_logger = "0.11.8"
 etcetera = "0.10.0"
