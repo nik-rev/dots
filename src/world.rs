@@ -1,14 +1,10 @@
 //! See [`World`] for more info
 
 use eyre::ContextCompat as _;
-use std::{
-    fs,
-    path::{self, Path, PathBuf},
-};
+use std::path::{self, Path, PathBuf};
 
 use itertools::Itertools as _;
 use tap::Pipe as _;
-use walkdir::WalkDir;
 
 use crate::{
     config::Config,
@@ -231,7 +227,7 @@ impl World {
 
         let config = root
             .join(Config::FILE_NAME)
-            .pipe(fs::read_to_string)
+            .pipe(std::fs::read_to_string)
             .with_context(|| eyre!("failed to read config file {}", Config::FILE_NAME))
             .map_err(single_err)?
             .pipe_deref(toml::de::from_str::<Config>)
@@ -273,7 +269,7 @@ impl World {
             .dirs
             .into_iter()
             .flat_map(|crate::config::Dir { input, output }| {
-                WalkDir::new(config.root.join(&input))
+                walkdir::WalkDir::new(config.root.join(&input))
                     .into_iter()
                     .flatten()
                     .filter(|dir_entry| dir_entry.file_type().is_file())
@@ -281,9 +277,10 @@ impl World {
                         // location of the `input` file
                         let old_location = path::absolute(file.path())?;
 
-                        let contents = fs::read_to_string(&old_location).with_context(|| {
-                            eyre!("failed to read path {}", old_location.show())
-                        })?;
+                        let contents =
+                            std::fs::read_to_string(&old_location).with_context(|| {
+                                eyre!("failed to read path {}", old_location.show())
+                            })?;
 
                         Ok::<_, Error>(File {
                             old_location,
