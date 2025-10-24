@@ -1,2 +1,9 @@
-toolchain.channel = "1.90"
-toolchain.components = ["rust-analyzer", "cargo", "rustfmt", "clippy", "rustc", "rust-src"]
+toolchain.channel = "nightly-2025-10-23"
+toolchain.components = [
+  "rust-analyzer",
+  "cargo",
+  "rustfmt",
+  "clippy",
+  "rustc",
+  "rust-src"
+]
